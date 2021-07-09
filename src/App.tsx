@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { spawn } from 'child_process';
+import { readableFileSize } from './tools';
 
 interface Image {
     Containers: number; // -1
@@ -11,7 +12,7 @@ interface Image {
     RepoDigests: string[] | null;
     RepoTags: string[];
     SharedSize: number;
-    Size: number; // 283530681
+    Size: number;
     VirtualSize: number; // 283530681
 }
 
@@ -53,6 +54,10 @@ const runScript = (command: string): Promise<string> => new Promise((resolve) =>
     });
 })
 
+
+// GET https://baf4mbp.azurecr.io/acr/v1/_catalog
+// GET https://baf4mbp.azurecr.io/acr/v1/account/_tags?orderby=timedesc
+
 const imageList = async (): Promise<Image[]> => {
    const a = await runScript('curl --unix-socket /var/run/docker.sock -H "Content-Type: application/json" http://localhost/v1.41/images/json');
 
@@ -76,7 +81,7 @@ const Row = ({ image }: { image: Image}) => {
         <tr>
             <td>{isDownloading ? 'downloading' : <button onClick={download}>download .tgz</button>}</td>
             <td>{image.RepoTags[0]}</td>
-            <td>{image.Size}({image.VirtualSize})</td>
+            <td>{readableFileSize(image.Size)}</td>
             <td>{image.Created}</td>
         </tr>
     )
