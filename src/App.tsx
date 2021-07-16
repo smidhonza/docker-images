@@ -17,7 +17,7 @@ interface Image {
 }
 
 const runScript = (command: string): Promise<string> => new Promise((resolve) => {
-    let result: any;
+    const result: string[] = [];
     const child = spawn(command,{
         shell: true,
     });
@@ -32,9 +32,7 @@ const runScript = (command: string): Promise<string> => new Promise((resolve) =>
 
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (data) => {
-        //Here is the output
-        data=data.toString();
-        result = data
+        result.push(data.toString())
     });
 
     child.stderr.setEncoding('utf8');
@@ -46,11 +44,9 @@ const runScript = (command: string): Promise<string> => new Promise((resolve) =>
     });
 
     child.on('close', (code) => {
-       console.log('close', code)
         if (code === 0) {
-            resolve(result)
+            resolve(result.join(''))
         }
-
     });
 })
 
@@ -67,7 +63,6 @@ const imageList = async (): Promise<Image[]> => {
 const Row = ({ image }: { image: Image}) => {
     const [isDownloading, setIsDownloading] = React.useState(false);
 
-
     const download = async () => {
         setIsDownloading(true);
         const filename = image.RepoTags[0].replace('/','.').replace(':','.')
@@ -77,12 +72,15 @@ const Row = ({ image }: { image: Image}) => {
         setIsDownloading(false)
     };
 
+    const [name, tag] = image.RepoTags[0].split(':')
+
     return (
         <tr>
             <td>{isDownloading ? 'downloading' : <button onClick={download}>download .tgz</button>}</td>
-            <td>{image.RepoTags[0]}</td>
-            <td>{readableFileSize(image.Size)}</td>
-            <td>{image.Created}</td>
+            <td>{name}</td>
+            <td>{tag}</td>
+            <td style={{ textAlign: 'right' }}>{readableFileSize(image.Size)}</td>
+            <td>{new Date(image.Created).toISOString()}</td>
         </tr>
     )
 }
@@ -108,27 +106,26 @@ const Example = () => {
      fetchList()
     }, []);
 
-    if (isFetching) {
-        return (<div> fetching images</div>)
-    }
-
     return (
         <div>
-            <button onClick={fetchList}>refresh</button>
-            <table>
+            <button onClick={fetchList}>{isFetching ? "refreshing" : "refresh"}</button>
+            <table style={{ width: '100%' }}>
                 <thead>
                     <tr>
                         <th></th>
-                        <th>repository</th>
-                        <th>size</th>
-                        <th>created</th>
+                        <th>Image</th>
+                        <th>Tag</th>
+                        <th>Size</th>
+                        <th>Created</th>
                     </tr>
                 </thead>
-                <tbody>
-                {list.map((image) => {
-                    return (<Row key={image.Id} image={image}/>)
-                })}
-                </tbody>
+                {isFetching ? (
+                    <tbody><tr><td colSpan={5}>fetching images</td></tr></tbody>
+                ) : (
+                    <tbody>
+                    {list.map((image) => (<Row key={image.Id} image={image}/>))}
+                    </tbody>
+                )}
             </table>
         </div>
     )
