@@ -67,7 +67,7 @@ const Row = ({ image }: { image: Image}) => {
 
         let buff: string[] = [];
 
-        await runScript(`curl --unix-socket /var/run/docker.sock  http://localhost/v1.41/images/${image.RepoTags[0]}/get --output ~/Downloads/${filename}.tgz`, true, (progress) => {
+        await runScript(`curl --unix-socket /var/run/docker.sock  http://localhost/v1.41/images/${image.RepoTags[0]}/get | gzip >  ~/Downloads/${filename}.tgz`, true, (progress) => {
            if (progress.startsWith('\r')) {
                buff = [];
            }
