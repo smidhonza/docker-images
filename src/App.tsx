@@ -16,7 +16,7 @@ interface Image {
     VirtualSize: number; // 283530681
 }
 
-const runScript = (command: string): Promise<string> => new Promise((resolve) => {
+const runScript = (command: string, noOutput: boolean, onError?: (output: string) => void): Promise<string> => new Promise((resolve) => {
     const result: string[] = [];
     const child = spawn(command,{
         shell: true,
@@ -32,20 +32,19 @@ const runScript = (command: string): Promise<string> => new Promise((resolve) =>
 
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (data) => {
-        result.push(data.toString())
+        if(noOutput === false) {
+            result.push(data.toString())
+        }
     });
 
     child.stderr.setEncoding('utf8');
     child.stderr.on('data', (data) => {
-        // Return some data to the renderer process with the mainprocess-response ID
-        // mainWindow.webContents.send('mainprocess-response', data);
-        //Here is the output from the command
-        console.log('stderr', data);
+        onError && onError(data)
     });
 
     child.on('close', (code) => {
         if (code === 0) {
-            resolve(result.join(''))
+            resolve(noOutput ? undefined : result.join(''))
         }
     });
 })
@@ -55,28 +54,42 @@ const runScript = (command: string): Promise<string> => new Promise((resolve) =>
 // GET https://baf4mbp.azurecr.io/acr/v1/account/_tags?orderby=timedesc
 
 const imageList = async (): Promise<Image[]> => {
-   const a = await runScript('curl --unix-socket /var/run/docker.sock -H "Content-Type: application/json" http://localhost/v1.41/images/json');
-
+   const a = await runScript('curl --unix-socket /var/run/docker.sock -H "Content-Type: application/json" http://localhost/v1.41/images/json', false);
     return JSON.parse(a)
 };
 
 const Row = ({ image }: { image: Image}) => {
-    const [isDownloading, setIsDownloading] = React.useState(false);
+    const [progress, setProgress] = React.useState<string>(undefined);
 
     const download = async () => {
-        setIsDownloading(true);
+        setProgress('preparing');
         const filename = image.RepoTags[0].replace('/','.').replace(':','.')
-        const command = `docker image save ${image.RepoTags[0]} | gzip > ~/Downloads/${filename}.tgz`
 
-        await runScript(command);
-        setIsDownloading(false)
+        let buff: string[] = [];
+
+        await runScript(`curl --unix-socket /var/run/docker.sock  http://localhost/v1.41/images/${image.RepoTags[0]}/get --output ~/Downloads/${filename}.tgz`, true, (progress) => {
+           if (progress.startsWith('\r')) {
+               buff = [];
+           }
+           buff.push(progress);
+
+           const clean = buff.join('').split(' ').filter(a => a.trim() !== '')
+           const [t1, received, t3, t4, t5, t6, t7, t8,t9, time,t11,t12] = clean;
+
+           if (time && received) {
+               setProgress(`${time} ${received}`)
+           }
+
+        });
+
+        setProgress(undefined)
     };
 
     const [name, tag] = image.RepoTags[0].split(':')
 
     return (
         <tr>
-            <td>{isDownloading ? 'downloading' : <button onClick={download}>download .tgz</button>}</td>
+            <td>{progress || <button onClick={download}>download .tgz</button>}</td>
             <td>{name}</td>
             <td>{tag}</td>
             <td style={{ textAlign: 'right' }}>{readableFileSize(image.Size)}</td>
