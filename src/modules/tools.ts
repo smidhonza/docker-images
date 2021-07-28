@@ -10,3 +10,11 @@ export const readableFileSize = (size: number) => {
     const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     return get(size, units);
 }
+
+
+export const pad = (n: number) => (n < 10 ? '0' + n : n);
+
+export const toStringDateTime = (miliseconds: number) => {
+    const date = new Date(miliseconds * 1000)
+    return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+};
