@@ -1,7 +1,7 @@
 {
   "name": "docker-images",
   "productName": "docker-images",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "My Electron application description",
   "main": "dist/index.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "test": "jest"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/smidhonza/docker-images.git"
+    "type": "git",
+    "url": "https://github.com/smidhonza/docker-images.git"
   },
   "keywords": [],
   "author": {
@@ -63,8 +63,7 @@
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "update-electron-app": "^2.0.1"
+    "react-dom": "^17.0.2"
   },
   "jest": {
     "preset": "ts-jest",
