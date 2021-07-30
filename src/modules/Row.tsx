@@ -13,7 +13,7 @@ const Tbody = ({ image }: IProps) => {
 
     return (
         <tbody>
-            {image.tags.sort((a, b) => a.created - b.created).map((tag, index) => {
+            {image.tags.sort((a, b) => b.created - a.created).map((tag, index) => {
                 return (
                     <Row key={`${image.name}-${tag.tag}`} tag={tag} imageName={image.name} tagCount={image.tags.length} index={index} />
                 )
