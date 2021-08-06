@@ -36,12 +36,12 @@ const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: Image
                 buff = [];
             }
             buff.push(progress);
-
             const clean = buff.join('').split(' ').filter(a => a.trim() !== '')
             const [t1, received, t3, t4, t5, t6, t7, t8,t9, time,t11,t12] = clean;
 
             if (time && received) {
-                setProgress(`${time} ${received}`)
+                const [_, minutes, seconds] = time.split(":");
+                setProgress(`${[minutes, seconds].join(":")} ${received}`)
             }
 
         });

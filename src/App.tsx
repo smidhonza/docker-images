@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { ImageList } from './modules/ImageList';
+import Home from './modules/Home';
 
 export const render = () => {
-    ReactDOM.render(<ImageList />, document.getElementById('root'));
+    ReactDOM.render(<Home />, document.getElementById('root'));
 }

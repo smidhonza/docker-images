@@ -18,3 +18,10 @@ export const toStringDateTime = (miliseconds: number) => {
     const date = new Date(miliseconds * 1000)
     return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 };
+
+
+export const toReadableDate = (datetime: string) => {
+    const date = new Date(datetime)
+    return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+
+}
