@@ -1,6 +1,7 @@
 import * as React from "react";
 import { runScript } from './utils';
 import { toReadableDate } from './tools';
+import { isLeft } from 'fputils';
 
 interface IDetail {
     changeableAttributes:{
@@ -24,16 +25,14 @@ const AzureTags = (props: { repository: string}) => {
 
     const fetchDetail = async () => {
         setIsFetching(true);
-        try {
             const data = await runScript(`az acr repository show-tags -n ${registry} --repository ${props.repository} --detail --orderby time_desc`, false);
-            setDetail(JSON.parse(data))
+            if (isLeft(data)) {
+                console.error(data.value)
+            } else {
+                setDetail(JSON.parse(data.value))
+            }
 
-        } catch (error) {
-            console.error(error)
-        } finally {
             setIsFetching(false);
-
-        }
     }
 
 
@@ -64,17 +63,15 @@ const Azure = () => {
 
     const fetchList = async () => {
         setIsFetching(true);
-        try {
-            // await runScript(`az acr login -n ${registry}`, false);
+
             const data = await runScript(`az acr repository list -n ${registry}`, false);
-            setList(JSON.parse(data))
+            if (isLeft(data)) {
+                console.error(data.value)
+            } else {
+                setList(JSON.parse(data.value))
+            }
 
-        } catch (error) {
-            console.error(error)
-        } finally {
             setIsFetching(false);
-
-        }
     }
 
 

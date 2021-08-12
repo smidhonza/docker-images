@@ -1,17 +1,14 @@
-import { Image, ImageReadable } from './interfaces';
-import { runScript } from './utils';
+import { ImageReadable } from './interfaces';
 import * as React from 'react';
 import Row from './Row';
 import { readableFileSize, toStringDateTime } from './tools';
+import * as Docker from 'dockerode';
 
-const imageList = async (): Promise<Image[]> => {
-    const a = await runScript('curl --unix-socket /var/run/docker.sock -H "Content-Type: application/json" http://localhost/v1.41/images/json', false);
-    return JSON.parse(a)
-};
 
 const toTag = (current: Extracted): ImageReadable['tags'][0] => ({
     tag: current.tag,
-    size: readableFileSize(current.size),
+    size: current.size,
+    sizeReadable: readableFileSize(current.size),
     created: current.created,
     createdReadable: toStringDateTime(current.created)
 })
@@ -21,20 +18,21 @@ interface Extracted {
     id: string;
     tag: string;
     size: number;
+    sizeVirtual: number;
     created: number;
 }
-const extractAllTags = (list: Image[]): Extracted[] => {
+const extractAllTags = (list: Docker.ImageInfo[]): Extracted[] => {
     return list.reduce((all, current) => {
         const versions = current.RepoTags.map(t => {
             const [name, tag] = t.split(':')
-            return {name, tag, id: current.Id, size: current.Size, created: current.Created}
+            return {name, tag, id: current.Id, size: current.Size, created: current.Created }
         })
 
         return [...all, ...versions]
     }, [])
 }
 
-export const toReadableImages = (imageList: Image[]): ImageReadable[] =>
+export const toReadableImages = (imageList: Docker.ImageInfo[]): ImageReadable[] =>
     extractAllTags(imageList)
     .filter(r => r.tag !== '<none>' || r.name !== '<none>')
     .reduce<ImageReadable[]>((all, current) => {
@@ -45,7 +43,7 @@ export const toReadableImages = (imageList: Image[]): ImageReadable[] =>
         }
     }, [])
 
-export const ImageListRender = ({ isFetching, list }: { list: Image[]; isFetching: boolean; }) => {
+export const ImageListRender = ({ isFetching, list }: { list: Docker.ImageInfo[]; isFetching: boolean; }) => {
     return (
         <table style={{ width: '100%' }}>
             <thead>
@@ -65,29 +63,37 @@ export const ImageListRender = ({ isFetching, list }: { list: Image[]; isFetchin
 }
 
 export const ImageList = () => {
-    const [list, setList] = React.useState<Image[]>([]);
+    const [list, setList] = React.useState<Docker.ImageInfo[]>([]);
+    const [error, setError] = React.useState<Error>();
     const [isFetching, setIsFetching] = React.useState(false);
 
     const fetchList = async () => {
-        setIsFetching(true);
-        try {
-            setList(await imageList())
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setIsFetching(false);
 
-        }
+        const docker = new Docker();
+        setIsFetching(true);
+
+        docker.listImages({ all: true }, (error, images) => {
+            if (error) {
+                console.error('imageList error', error);
+                setError(error);
+            } else {
+
+            setList(images)
+            }
+        });
+
+        setIsFetching(false);
     }
 
     React.useEffect(() => {
         fetchList()
     }, []);
 
+
     return (
         <>
             <button onClick={fetchList}>{isFetching ? "refreshing" : "refresh"}</button>
-            <ImageListRender list={list} isFetching={isFetching} />
+            {error ? (<div>{error.message}</div>) : (<ImageListRender list={list} isFetching={isFetching} />)}
         </>
     )
 }

@@ -1,12 +1,16 @@
 import * as React from 'react';
-import { runScript } from './utils';
+import * as fs from "fs";
+import * as zlib from 'zlib';
+import * as os from 'os';
+
 import { ImageReadable } from './interfaces';
+import * as Docker from 'dockerode';
+import { readableFileSize } from './tools';
+
 
 interface IProps {
     image: ImageReadable;
 }
-
-
 
 const Tbody = ({ image }: IProps) => {
 
@@ -25,28 +29,35 @@ const Tbody = ({ image }: IProps) => {
 const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: ImageReadable['tags'][0], index: number; tagCount: number }) => {
     const [progress, setProgress] = React.useState<string>(undefined);
 
-    const download = async (tag: string) => {
+    const download = async (imageTag: string) => {
         setProgress('preparing');
-        const filename = [imageName.replace('/','.'), tag].join('.');
+        const filename = [imageName.replace('/','.'), imageTag, 'tgz'].join('.');
 
-        let buff: string[] = [];
 
-        await runScript(`curl --unix-socket /var/run/docker.sock  http://localhost/v1.41/images/${imageName}:${tag}/get | gzip >  ~/Downloads/${filename}.tgz`, true, (progress) => {
-            if (progress.startsWith('\r')) {
-                buff = [];
-            }
-            buff.push(progress);
-            const clean = buff.join('').split(' ').filter(a => a.trim() !== '')
-            const [t1, received, t3, t4, t5, t6, t7, t8,t9, time,t11,t12] = clean;
+        const docker = new Docker();
+        const image = docker.getImage(`${imageName}:${imageTag}`)
+        image.get((error, stream) => {
+            let counter = 0
+            stream.on('data', (chunk) => {
+                counter = counter + chunk.length
+                // console.log(`Received ${chunk.length} bytes of data.`);
+                setProgress(readableFileSize(counter)) // todo procenta
+            });
 
-            if (time && received) {
-                const [_, minutes, seconds] = time.split(":");
-                setProgress(`${[minutes, seconds].join(":")} ${received}`)
-            }
+            const homedir = os.homedir();
 
-        });
+            const writable=fs.createWriteStream(`${homedir}/Downloads/${filename}`);
+            const gzip = zlib.createGzip();
+            writable.on('error', (e: any) => { console.error(e); });
 
-        setProgress(undefined)
+            stream.pipe(gzip).pipe(writable);
+
+            stream.on('end',()=>{
+                console.log('done')
+                setProgress(undefined)
+            });
+
+        })
     };
 
     return (
@@ -54,7 +65,7 @@ const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: Image
             {index === 0 ?<td rowSpan={tagCount}>{imageName}</td> : null}
             <td>{tag.tag}</td>
             <td>{progress || <button onClick={() => download(tag.tag)}>download .tgz</button>}</td>
-            <td style={{ textAlign: 'right' }}>{tag.size}</td>
+            <td style={{ textAlign: 'right' }}>{tag.sizeReadable}</td>
             <td style={{ textAlign: 'right' }}>{tag.createdReadable}</td>
         </tr>
     )
