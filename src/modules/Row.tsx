@@ -40,8 +40,9 @@ const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: Image
             let counter = 0
             stream.on('data', (chunk) => {
                 counter = counter + chunk.length
-                // console.log(`Received ${chunk.length} bytes of data.`);
-                setProgress(readableFileSize(counter)) // todo procenta
+
+                const percentage = counter / tag.size * 100
+                setProgress(percentage > 100 ? 'finishing' : `${readableFileSize(counter)} (${Math.round(percentage)}%)`)
             });
 
             const homedir = os.homedir();
