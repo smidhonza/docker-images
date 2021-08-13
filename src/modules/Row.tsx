@@ -1,30 +1,10 @@
-import * as React from 'react';
-import * as fs from "fs";
-import * as zlib from 'zlib';
-import * as os from 'os';
-
+import React from 'react';
+import fs from "fs";
+import zlib from 'zlib';
+import os from 'os';
 import { ImageReadable } from './interfaces';
-import * as Docker from 'dockerode';
+import Docker from 'dockerode';
 import { readableFileSize } from './tools';
-
-
-interface IProps {
-    image: ImageReadable;
-}
-
-const Tbody = ({ image }: IProps) => {
-
-
-    return (
-        <tbody>
-            {image.tags.sort((a, b) => b.created - a.created).map((tag, index) => {
-                return (
-                    <Row key={`${image.name}-${tag.tag}`} tag={tag} imageName={image.name} tagCount={image.tags.length} index={index} />
-                )
-            })}
-        </tbody>
-    )
-}
 
 const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: ImageReadable['tags'][0], index: number; tagCount: number }) => {
     const [progress, setProgress] = React.useState<string>(undefined);
@@ -72,4 +52,4 @@ const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: Image
     )
 }
 
-export default Tbody;
+export default Row;

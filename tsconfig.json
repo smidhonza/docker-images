@@ -9,6 +9,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "jsx": "react",
+    "esModuleInterop": true,
     "paths": {
       "*": ["node_modules/*"]
     }
