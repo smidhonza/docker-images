@@ -1,7 +1,8 @@
 import { mockedImages } from './mocks';
-import { ImageListRender, toReadableImages } from '../ImageList';
+import { ImageListRender } from '../ImageList';
 import * as renderer from 'react-test-renderer';
 import * as React from 'react';
+import { toReadableImages } from '../tools';
 
 describe('<ImageList />', () => {
     it('renders ok', () => {
