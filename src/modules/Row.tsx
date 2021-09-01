@@ -4,7 +4,7 @@ import zlib from 'zlib';
 import os from 'os';
 import { ImageReadable } from './interfaces';
 import Docker from 'dockerode';
-import { readableFileSize } from './tools';
+import { readableFileSize } from '../tools';
 
 const Row = ({ tag, imageName, index, tagCount }:{ imageName: string, tag: ImageReadable['tags'][0], index: number; tagCount: number }) => {
     const [progress, setProgress] = React.useState<string>(undefined);

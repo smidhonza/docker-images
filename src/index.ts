@@ -1,12 +1,17 @@
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
+import { server } from './server';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
   app.quit();
 }
 
-const createWindow = (): void => {
+const createWindow = async (): Promise<void> => {
+
+  await server().listen(5000);
+
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     height: 700,
@@ -39,11 +44,11 @@ app.on('window-all-closed', () => {
   }
 });
 
-app.on('activate', () => {
+app.on('activate', async () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    await createWindow();
   }
 });
 

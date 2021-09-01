@@ -1,19 +1,14 @@
 import * as React from "react";
 import { ImageList } from './ImageList';
-import Azure from './Azure';
+import { dockerService } from '../sdk';
 
 const Home = () => {
-    const [nav, setNav] = React.useState<'home' | 'azure'>('home');
+
+    const service = dockerService('http://localhost:5000')
 
     return (
         <div>
-            <div>
-                <button onClick={() => setNav('home')}>Local</button>
-                <button onClick={() => setNav('azure')}>Azure</button>
-            </div>
-            {nav === 'home' ? <ImageList /> : null}
-            {nav === 'azure' ? <Azure /> : null}
-
+           <ImageList dockerService={service}/>
         </div>
     )
 }

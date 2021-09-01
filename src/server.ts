@@ -1,34 +1,7 @@
-import { ImageReadable } from './interfaces';
-import {ImageInfo} from 'dockerode';
-
-const get = (size: number, units: string[]): string => {
-    const [head, ...rest] = units;
-    if (size >= 1024) {
-        return get(size / 1024, rest)
-    }
-    return `${size.toFixed(1)} ${head}`
-}
-
-export const readableFileSize = (size: number) => {
-    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    return get(size, units);
-}
-
-
-export const pad = (n: number) => (n < 10 ? '0' + n : n);
-
-export const toStringDateTime = (miliseconds: number) => {
-    const date = new Date(miliseconds * 1000)
-    return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-};
-
-
-export const toReadableDate = (datetime: string) => {
-    const date = new Date(datetime)
-    return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-
-}
-
+import express from "express";
+import Docker, { ImageInfo } from 'dockerode';
+import { ImageReadable } from './modules/interfaces';
+import { readableFileSize, toStringDateTime } from './tools';
 
 
 const toTag = (current: Extracted): ImageReadable['tags'][0] => ({
@@ -58,7 +31,7 @@ const extractAllTags = (list: ImageInfo[]): Extracted[] => {
     }, [])
 }
 
-export const toReadableImages = (imageList: ImageInfo[]): ImageReadable[] =>
+const toReadableImages = (imageList: ImageInfo[]): ImageReadable[] =>
     extractAllTags(imageList)
         .filter(r => r.tag !== '<none>' || r.name !== '<none>')
         .reduce<ImageReadable[]>((all, current) => {
@@ -68,3 +41,37 @@ export const toReadableImages = (imageList: ImageInfo[]): ImageReadable[] =>
                 return [...all, { name: current.name, id: current.id, tags: [toTag(current)]}]
             }
         }, [])
+
+
+export const server = () => {
+
+    const app = express();
+    const docker = new Docker();
+
+    app.use((req, res, next) => {
+        console.log(`new ${req.method} request on ${req.originalUrl}`);
+        next();
+    });
+
+    app.get('/images', (req, res) => {
+        docker.listImages({ all: true }, (error, images) => {
+            if (error) {
+                console.error('imageList error', error);
+                return res.status(500).json({ error: error.message })
+            }
+                return res.status(200).json(toReadableImages(images))
+        });
+
+    })
+
+
+    return {
+        listen: async (port: number) => {
+            app.listen(port, () => new Promise((resolve) => {
+                console.log('ok')
+                //todo: try different port when {port} is busy
+                resolve(port)
+            }))
+        }
+    }
+}

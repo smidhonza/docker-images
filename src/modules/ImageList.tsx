@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { toReadableImages } from './tools';
-import Docker from 'dockerode';
 import Tbody from './Tbody';
+import { IDockerService } from '../sdk';
+import { either } from 'fputils';
+import { ImageReadable } from './interfaces';
 
-export const ImageListRender = ({ isFetching, list }: { list: Docker.ImageInfo[]; isFetching: boolean; }) => {
+export const ImageListRender = ({ isFetching, list }: { list: ImageReadable[]; isFetching: boolean; }) => {
     return (
         <table style={{ width: '100%' }}>
             <thead>
@@ -16,32 +17,20 @@ export const ImageListRender = ({ isFetching, list }: { list: Docker.ImageInfo[]
             </thead>
             {isFetching ? (
                 <tbody><tr><td colSpan={5}>fetching images</td></tr></tbody>
-            ) : (toReadableImages(list).map((image) => (<Tbody key={image.id} image={image}/>))
+            ) : (list.map((image) => (<Tbody key={image.id} image={image}/>))
             )}
         </table>
     );
 }
 
-export const ImageList = () => {
-    const [list, setList] = React.useState<Docker.ImageInfo[]>([]);
+export const ImageList = (props: { dockerService: IDockerService }) => {
+    const [list, setList] = React.useState<ImageReadable[]>([]);
     const [error, setError] = React.useState<Error>();
     const [isFetching, setIsFetching] = React.useState(false);
 
     const fetchList = async () => {
-
-        const docker = new Docker();
         setIsFetching(true);
-
-        docker.listImages({ all: true }, (error, images) => {
-            if (error) {
-                console.error('imageList error', error);
-                setError(error);
-            } else {
-
-            setList(images)
-            }
-        });
-
+        either(setError, setList, await props.dockerService.images())
         setIsFetching(false);
     }
 
