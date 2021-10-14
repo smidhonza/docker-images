@@ -1,4 +1,4 @@
 {
   "private": true,
-  "workspaces": ["docker-images"]
+  "workspaces": ["docker-images", "server"]
 }

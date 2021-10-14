@@ -1,6 +1,6 @@
 import express from "express";
 import Docker, { ImageInfo } from 'dockerode';
-import { ImageReadable } from './modules/interfaces';
+import { ImageReadable } from './interfaces';
 import { readableFileSize, toStringDateTime } from './tools';
 
 
@@ -28,7 +28,7 @@ const extractAllTags = (list: ImageInfo[]): Extracted[] => {
         })
 
         return [...all, ...versions]
-    }, [])
+    }, [] as any)
 }
 
 const toReadableImages = (imageList: ImageInfo[]): ImageReadable[] =>
@@ -59,7 +59,7 @@ export const server = () => {
                 console.error('imageList error', error);
                 return res.status(500).json({ error: error.message })
             }
-                return res.status(200).json(toReadableImages(images))
+            return res.status(200).json(toReadableImages(images as any))
         });
 
     })
