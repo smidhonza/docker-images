@@ -22,7 +22,7 @@ interface Extracted {
 }
 const extractAllTags = (list: ImageInfo[]): Extracted[] => {
     return list.reduce((all, current) => {
-        const versions = current.RepoTags.map(t => {
+        const versions = (current.RepoTags || []).map(t => {
             const [name, tag] = t.split(':')
             return {name, tag, id: current.Id, size: current.Size, created: current.Created }
         })
